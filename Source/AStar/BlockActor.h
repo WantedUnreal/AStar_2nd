@@ -32,6 +32,8 @@ public:
 	int32 indexX;
 	// Array 에서 몇 번째 인지
 	int32 index;
+	// 부모 idx (누구로 부터 cost 를 계산했냐?)
+	int32 parentIndex = -1;
 
 	// Outline
 	UPROPERTY()

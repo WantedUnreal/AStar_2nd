@@ -65,6 +65,23 @@ void AAStarPlayer::Tick(float DeltaTime)
 	{
 		StartFindPath();
 	}
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::RightMouseButton))
+	{
+		// 길 찾았다.
+		if (currBlockIdx == goalBlockIdx)
+		{
+			ABlockActor* temp = blocks[goalBlockIdx];
+			while (temp->parentIndex != -1)
+			{
+				temp->ChangeColorOutline(FLinearColor::Yellow);
+				temp = blocks[temp->parentIndex];
+			}
+		}
+		else
+		{
+			FindPath();
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -118,6 +135,8 @@ void AAStarPlayer::FindPath()
 {
 	// openArray 에서 우선순위 되는 value 가져오고 Array 에서 제거
 	openArray.HeapPop(currBlockIdx, FBlockCompare(blocks));
+	// 만약에 Closs 된 Block 이면 함수 나가자.
+	if (closeArray.Contains(currBlockIdx)) return;
 
 	AddOpenArray(FVector::ForwardVector);
 	AddOpenArray(FVector::BackwardVector);
@@ -154,6 +173,8 @@ void AAStarPlayer::AddOpenArray(FVector dir)
 
 	// 만약에 갈 수 없는 Block 이라면 함수 나가자
 	if (blocks[targetBlockIdx]->canMove == false) return;
+	// 만약에 Closs 된 Block 이면 함수 나가자.
+	if (closeArray.Contains(targetBlockIdx)) return;
 
 	// targetBlockIdx 의 block  Cost 구하자.
 	blocks[targetBlockIdx]->SetCost(blocks[currBlockIdx], blocks[goalBlockIdx]);

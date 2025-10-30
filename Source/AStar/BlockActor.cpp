@@ -63,6 +63,36 @@ void ABlockActor::ChangeColorOutline(FLinearColor color)
 
 void ABlockActor::SetCost(ABlockActor* s, ABlockActor* g)
 {
+	// gCost (시작점에서 누적거리)
+	float tempCost = FMath::Abs(s->indexY - indexY) + FMath::Abs(s->indexX - indexX);
+	// 대각선일 경우 1.5 점 더하자.
+	if (tempCost == 2) tempCost = 1.5f;
+	float gCostTemp = s->gCostValue + tempCost;
+
+	// hCost ( 목적지까지의 추정치 )
+	float hCostTemp = FMath::Max(FMath::Abs(g->indexY - indexY), FMath::Abs(g->indexX - indexX));
+
+	// fCost ( gCost + hCost )
+	float fCostTemp = gCostTemp + hCostTemp;
+
+	// 만약 fCostValue 이 -1 이라면 Cost 갱신
+	// 만약 fCostTemp 가  fCostValue 보다 작으면 갱신
+	// 만약 fCostTemp == fCostValue && gCostTemp 가 gCostValue 보다 크면 갱신
+	if (fCostValue == -1 ||
+		fCostTemp < fCostValue ||
+		(fCostTemp == fCostValue && gCostTemp > gCostValue))
+	{
+		gCostValue = gCostTemp;
+		hCostValue = hCostTemp;
+		fCostValue = fCostTemp;
+
+		gCost->SetText(FText::AsNumber(gCostValue));
+		hCost->SetText(FText::AsNumber(hCostValue));
+		fCost->SetText(FText::AsNumber(fCostValue));
+
+		// 몇 번째 Block 기준으로 Cost 를 구했는가
+		parentIndex = s->index;
+	}
 }
 
 

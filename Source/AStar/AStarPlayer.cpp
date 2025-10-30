@@ -101,5 +101,74 @@ void AAStarPlayer::StartFindPath()
 	if (ABlockActor* block = Cast<ABlockActor>(hitInfo.GetActor()))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Goal : %d"), block->index);
+		if (block->canMove)
+		{
+			goalBlockIdx = block->index;
+		}
+	}
+
+	// 시작 지점과 도착 지점이 잘 설정되었다면
+	if (goalBlockIdx != -1)
+	{
+		FindPath();
 	}
 }
+
+void AAStarPlayer::FindPath()
+{
+	// openArray 에서 우선순위 되는 value 가져오고 Array 에서 제거
+	openArray.HeapPop(currBlockIdx, FBlockCompare(blocks));
+
+	AddOpenArray(FVector::ForwardVector);
+	AddOpenArray(FVector::BackwardVector);
+	AddOpenArray(FVector::RightVector);
+	AddOpenArray(FVector::LeftVector);
+	AddOpenArray(FVector::ForwardVector + FVector::RightVector);
+	AddOpenArray(FVector::ForwardVector + FVector::LeftVector) ;
+	AddOpenArray(FVector::BackwardVector + FVector::RightVector);
+	AddOpenArray(FVector::BackwardVector + FVector::LeftVector);
+
+	closeArray.Add(currBlockIdx);
+	blocks[currBlockIdx]->ChangeColorOutline(FLinearColor::Gray);
+}
+
+void AAStarPlayer::AddOpenArray(FVector dir)
+{
+	// 다음 Y 축 방향 index
+	int32 nextY = blocks[currBlockIdx]->indexY + dir.Y;
+	// 다음 X 축 방향 index
+	int32 nextX = blocks[currBlockIdx]->indexX + dir.X;
+	// block 들 범위 밖에 있다면 함수를 나가자.
+	if (CheckIndex(nextX, nextY) == false) return;
+
+	// targetBlock index
+	int32 targetBlockIdx = currBlockIdx;
+	// 앞쪽
+	if (dir.X == 1) targetBlockIdx += 10;
+	// 뒤쪽
+	else if (dir.X == -1) targetBlockIdx -= 10;
+	// 오른쪽
+	if (dir.Y == 1) targetBlockIdx ++;
+	// 왼쪽
+	else if (dir.Y == -1) targetBlockIdx--;
+
+	// 만약에 갈 수 없는 Block 이라면 함수 나가자
+	if (blocks[targetBlockIdx]->canMove == false) return;
+
+	// targetBlockIdx 의 block  Cost 구하자.
+	blocks[targetBlockIdx]->SetCost(blocks[currBlockIdx], blocks[goalBlockIdx]);
+
+	// openArray 에 block 추가
+	openArray.HeapPush(targetBlockIdx, FBlockCompare(blocks));
+
+	blocks[targetBlockIdx]->ChangeColorOutline(FLinearColor::Blue);	
+}
+
+bool AAStarPlayer::CheckIndex(int32 nX, int32 nY)
+{
+	if (0 > nX || 10 <= nX) return false;
+	if (0 > nY || 10 <= nY) return false;
+
+	return true;
+}
+
